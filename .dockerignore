@@ -16,3 +16,5 @@ __pycache__/
 .gitignore
 
 k8s/
+
+img/

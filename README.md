@@ -2,6 +2,8 @@
 
 This demo shows how to set up the infrastructure to expose custom metrics from a Flask application to Kubernetes' Custom Metrics API, which can be used for Horizontal Pod Autoscaler (HPA) to perform auto-scaling.
 
+![](https://github.com/YuKitAs/prometheus-custom-metrics-in-k8s/blob/main/img/components.png)
+
 ## Environment
 
 * Minikube: v1.35.0
@@ -74,7 +76,8 @@ $ kubectl -nmonitoring get svc prometheus-server
 ```
 
 
-9. Install Prometheus Adapter to `monitoring` namespace with helm:
+9. We need [Prometheus Adapter](https://github.com/kubernetes-sigs/prometheus-adapter) to translate K8s API requests into PromQL queries 
+for Prometheus, so that it can fetch specific metrics for Custom Metrics API. Install Prometheus Adapter into the `monitoring` namespace with helm:
 ```console
 $ helm install prometheus-adapter prometheus-community/prometheus-adapter -n monitoring --set prometheus.url=http://prometheus-server.monitoring.svc --set prometheus.port=80
 ```
