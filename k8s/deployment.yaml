@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-custom-metrics-in-k8s
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus-custom-metrics-in-k8s
+  template:
+    metadata:
+      labels:
+        app: prometheus-custom-metrics-in-k8s
+    spec:
+      containers:
+        - name: app
+          image: localhost/prometheus-custom-metrics-in-k8s:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
