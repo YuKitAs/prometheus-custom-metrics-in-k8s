@@ -88,7 +88,7 @@ If you chose to install `kube-prometheus-stack`, the Prometheus Server will be m
 
 10. Add a job to the ConfigMap of Prometheus Server:
 ```console
-$ kubectl -nmonitoring get cm prometheus-server -o yaml > k8s/prometheus-config.yaml
+$ kubectl -nmonitoring get cm prometheus-server -o yaml > k8s/prometheus.cm.yaml
 ```
 
 Add a new job under `scrape_configs`:
@@ -114,7 +114,7 @@ http_requests_total{instance="<pod-ip>:5000", job="prometheus-custom-metrics-in-
 
 Apply the config:
 ```console
-$ kubectl -nmonitoring apply -f k8s/prometheus-config.yaml
+$ kubectl -nmonitoring apply -f k8s/prometheus.cm.yaml
 ```
 
 You could also edit the ConfigMap directly with
@@ -128,7 +128,7 @@ $ kubectl -nmonitoring edit cm prometheus-server
 
 12. Add a rule to the ConfigMap of Prometheus Adapter:
 ```console
-$ kubectl -nmonitoring get cm prometheus-adapter -o yaml > k8s/prometheus-adapter-config.yaml
+$ kubectl -nmonitoring get cm prometheus-adapter -o yaml > k8s/prometheus-adapter.cm.yaml
 ```
 
 Add a new query under `rules` to fetch the `http_requests_per_second` metric from Prometheus:
@@ -153,7 +153,7 @@ $ kubectl -nmonitoring port-forward svc/prometheus-server 9090:80
 
 If it shows the correct result, apply the config:
 ```console
-$ kubectl -nmonitoring apply -f k8s/prometheus-adapter-config.yaml
+$ kubectl -nmonitoring apply -f k8s/prometheus-adapter.cm.yaml
 ```
 
 You could also edit the ConfigMap directly with
@@ -177,4 +177,35 @@ If `resources` is empty, check any errors in the logs in prometheus-adapter, mos
 The connection can be tested with
 ```console
 $ kubectl run -it --rm --image=curlimages/curl --restart=Never test -- curl -v <prometheus-url>:<prometheus-port>/api/v1/status/config
+```
+
+15. Create a HorizontalPodAutoscaler that scales based on the custom metric like in [hpa.yaml](https://github.com/YuKitAs/prometheus-custom-metrics-in-k8s/tree/main/k8s):
+```yaml
+metrics:
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: 20
+```
+
+16. Deploy the HPA to the `default` namespace as well:
+```console
+$ kubectl apply -f k8s/hpa.yaml
+```
+
+17. Run a load test to simulate more than 20 requests per second for 2 minutes. The HPA event log should show the following:
+```
+$ kubectl describe hpa prometheus-custom-metrics-in-k8s
+
+Events:
+Normal  SuccessfulRescale  7m  horizontal-pod-autoscaler    New size: 2; reason: pods metric http_requests_per_second above target
+Normal  SuccessfulRescale  1m  horizontal-pod-autoscaler    New size: 1; reason: All metrics below target
+```
+
+You can also monitor the pods with
+```console
+$ kubectl get pod -w
 ```
