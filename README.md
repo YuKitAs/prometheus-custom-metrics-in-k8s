@@ -170,4 +170,9 @@ $ kubectl -nmonitoring edit cm prometheus-adapter
 $ kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1
 ```
 
-In the `resources` section we should find the metric `namespaces/http_requests_per_second`.
+In the `resources` array we should find the metric `namespaces/http_requests_per_second`. 
+If `resources` is empty, check any errors in the logs in prometheus-adapter, most likely the adapter can't connect to Prometheus due to config error.
+The connection can be tested with
+```console
+$ kubectl run -it --rm --image=curlimages/curl --restart=Never test -- curl -v <prometheus-url>:<prometheus-port>/api/v1/status/config
+```
