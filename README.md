@@ -142,7 +142,7 @@ Add a new query under `rules` to fetch the `http_requests_per_second` metric fro
   name:
     matches: "^(.*)_total"
     as: "${1}_per_second"
-  metricsQuery: sum(rate(http_requests_total[5m])) by (namespace, pod)
+  metricsQuery: sum(rate(http_requests_total[2m])) by (namespace, pod)
 ```
 
 The `metricsQuery` can be validated on Prometheus UI at `localhost:9090` via port forwarding:
@@ -161,6 +161,8 @@ You could also edit the ConfigMap directly with
 $ kubectl -nmonitoring edit cm prometheus-adapter  
 ```
 
+More details about the config can be found in the [official doc](https://github.com/kubernetes-sigs/prometheus-adapter/blob/master/docs/config.md).
+
 
 13. Restart the `prometheus-adapter` pod with the new config.
 
@@ -170,7 +172,7 @@ $ kubectl -nmonitoring edit cm prometheus-adapter
 $ kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1
 ```
 
-In the `resources` array we should find the metric `namespaces/http_requests_per_second`. 
+In the `resources` array you should find the metric `pods/http_requests_per_second`. 
 If `resources` is empty, check any errors in the logs in prometheus-adapter, most likely the adapter can't connect to Prometheus due to config error.
 The connection can be tested with
 ```console

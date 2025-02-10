@@ -76,7 +76,7 @@ data:
       name:
         matches: "^(.*)_total"
         as: "${1}_per_second"
-      metricsQuery: sum(rate(http_requests_total[5m])) by (namespace, pod)
+      metricsQuery: sum(rate(http_requests_total[2m])) by (namespace, pod)
 kind: ConfigMap
 metadata:
   annotations:
