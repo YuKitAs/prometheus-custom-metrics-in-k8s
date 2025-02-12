@@ -184,7 +184,7 @@ Only install a standalone Prometheus instance with manual configuration.
     ```
 
 
-9. Since the configuration is managed by the Prometheus Operator, new scrape jobs have to be defined using ServiceMonitor or PodMonitor. Create a ServiceMonitor ([service-monitor.yaml](https://github.com/YuKitAs/prometheus-custom-metrics-in-k8s/blob/main/k8s/service-monitor.yaml)):
+9. Since the configuration is managed by the Prometheus Operator, new scrape jobs have to be defined using ServiceMonitor or PodMonitor. Create a ServiceMonitor for `monitoring` namespace ([service-monitor.yaml](https://github.com/YuKitAs/prometheus-custom-metrics-in-k8s/blob/main/k8s/service-monitor.yaml)):
 
    ```yaml
    spec:
@@ -203,20 +203,20 @@ Only install a standalone Prometheus instance with manual configuration.
    **Note**: it needs to be allowed to discover services in the `default` namespace, the labels must match the service labels, and the port must match a named port in the service.
 
 
-10. Deploy ServiceMonitor to `monitoring` namespace:
+10. Deploy ServiceMonitor:
 
       ```console
       $ kubectl apply -f k8s/service-monitor.yaml
       ```
 
 
-11. Make sure Prometheus can select ServiceMonitors from other namespaces by checking that the Prometheus CRD
+11. If the ServiceMonitor is installed in `default` namespace, make sure Prometheus can select ServiceMonitors from other namespaces by checking that the Prometheus CRD contains proper namespace selector and label selector:
 
       ```console
       $ kubectl -nmonitoring describe prometheus prometheus-kube-prometheus-prometheus
       ```
       
-      contains
+      The default values are
       
       ```yaml
       spec:
