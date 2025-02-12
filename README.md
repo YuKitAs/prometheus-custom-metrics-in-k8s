@@ -4,17 +4,26 @@ This demo shows how to set up the infrastructure to expose custom metrics from a
 
 ![](https://github.com/YuKitAs/prometheus-custom-metrics-in-k8s/blob/main/img/components.png)
 
+- [Environment](#environment)
+- [Walkthrough](#walkthrough)
+  - [Deploy application](#deploy-application)
+  - [Set up Prometheus](#set-up-prometheus)
+      - [Option 1: Install `prometheus`](#option-1-install-prometheus)
+      - [Option 2: Install `kube-prometheus-stack`](#option-2-install-kube-prometheus-stack)
+  - [Set up Prometheus Adapter](#set-up-prometheus-adapter)
+  - [Auto-scaling](#auto-scaling)
+
 ## Environment
 
-* Minikube: v1.35.0
-* Docker: v27.4.1 (optional, can be replaced by Minikube's built-in Docker daemon)
-* Kubectl: v1.32.0 (optional, can be replaced by `minikube kubectl`)
-* Helm (optional, used to install Prometheus and Prometheus Adapter in this demo)
+* Minikube v1.35.0
+* Docker v27.4.1 (optional, can be replaced by Minikube's built-in Docker daemon)
+* Kubectl v1.32.0 (optional, can be replaced by `minikube kubectl`)
+* Helm v3.17.0 (optional, used to install Prometheus and Prometheus Adapter in this demo)
 * Python 3.12
 
 ## Walkthrough
 
-### Deploy application to `minikube` cluster
+### Deploy application
 
 1. Create a Flask app ([app.py](https://github.com/YuKitAs/prometheus-custom-metrics-in-k8s/blob/main/app.py)) 
 that exposes a custom metric `http_requests_total` at `http://localhost:5000/metrics` for Prometheus to scrape.
@@ -50,7 +59,8 @@ that exposes a custom metric `http_requests_total` at `http://localhost:5000/met
 4. Deploy the app to K8s with
 
     ```console
-    $ kubectl apply -f k8s/
+    $ kubectl apply -f k8s/deployment.yaml
+    $ kubectl apply -f k8s/service.yaml
     ```
     
     [deployment.yaml](https://github.com/YuKitAs/prometheus-custom-metrics-in-k8s/blob/main/k8s/deployment.yaml) and [service.yaml](https://github.com/YuKitAs/prometheus-custom-metrics-in-k8s/blob/main/k8s/service.yaml) will be applied to create a Deployment and a Service in the `default` namespace.
@@ -156,7 +166,7 @@ Only install a standalone Prometheus instance with manual configuration.
 13. Jump to step 14.
 
 
-#### Optional 2: Install `kube-prometheus-stack`
+#### Option 2: Install `kube-prometheus-stack`
 
 7. Alternatively, `kube-prometheus-stack` can be installed with additional components (e.g. Grafana and Alertmanager) and automatic service discovery. Prometheus will be managed by the Prometheus Operator instead.
 
@@ -291,7 +301,7 @@ Only install a standalone Prometheus instance with manual configuration.
 
 ### Auto-scaling
 
-17. Create a HorizontalPodAutoscaler that scales based on the custom metric like in [hpa.yaml](https://github.com/YuKitAs/prometheus-custom-metrics-in-k8s/tree/main/k8s):
+17. Create a HorizontalPodAutoscaler that scales based on the custom metric like in [hpa.yaml](https://github.com/YuKitAs/prometheus-custom-metrics-in-k8s/blob/main/k8s/hpa.yaml):
 
    ```yaml
    metrics:
