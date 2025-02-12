@@ -144,24 +144,24 @@ Only install a standalone Prometheus instance with manual configuration.
 
 11. Verify Prometheus config via port forwarding:
 
-   ```console
-   $ kubectl -nmonitoring port-forward svc/prometheus-server 9090:80
-   ```
-
-   Check `localhost:9090/config` and `localhost:9090/targets`.
-
-   Or with Minikube at a random port:
-
-   ```console
-   $ minikube -nmonitoring service prometheus-server
-   ```
+      ```console
+      $ kubectl -nmonitoring port-forward svc/prometheus-server 9090:80
+      ```
+   
+      Check `localhost:9090/config` and `localhost:9090/targets`.
+   
+      Alternatively with Minikube at a random port:
+   
+      ```console
+      $ minikube -nmonitoring service prometheus-server
+      ```
 
 
 12. Install Prometheus Adapter into the `monitoring` namespace with helm
 
-    ```console
-    $ helm install prometheus-adapter prometheus-community/prometheus-adapter -n monitoring --set prometheus.url=http://prometheus-server.monitoring.svc --set prometheus.port=80
-    ```
+       ```console
+       $ helm install prometheus-adapter prometheus-community/prometheus-adapter -n monitoring --set prometheus.url=http://prometheus-server.monitoring.svc --set prometheus.port=80
+       ```
     
 13. Jump to step 14.
 
@@ -205,39 +205,39 @@ Only install a standalone Prometheus instance with manual configuration.
 
 10. Deploy ServiceMonitor to `monitoring` namespace:
 
-   ```console
-   $ kubectl apply -f k8s/service-monitor.yaml
-   ```
+      ```console
+      $ kubectl apply -f k8s/service-monitor.yaml
+      ```
 
 
 11. Make sure Prometheus can select ServiceMonitors from other namespaces by checking that the Prometheus CRD
 
-   ```console
-   $ kubectl -nmonitoring describe prometheus prometheus-kube-prometheus-prometheus
-   ```
-   
-   contains
-   
-   ```yaml
-   spec:
-     serviceMonitorNamespaceSelector: {}  # Selects ServiceMonitors from all namespaces
-     serviceMonitorSelector: {}  # Selects all ServiceMonitors
-   ```
+      ```console
+      $ kubectl -nmonitoring describe prometheus prometheus-kube-prometheus-prometheus
+      ```
+      
+      contains
+      
+      ```yaml
+      spec:
+        serviceMonitorNamespaceSelector: {}  # Selects ServiceMonitors from all namespaces
+        serviceMonitorSelector: {}  # Selects all ServiceMonitors
+      ```
 
 
 12. Verify Prometheus config via port forwarding:
 
-   ```console
-   $ kubectl -nmonitoring port-forward svc/prometheus-operated 9090
-   ```
-
-   Check `localhost:9090/config` and `localhost:9090/targets`.
-
-   Or with Minikube at a random port:
-
-   ```console
-   $ minikube -nmonitoring service prometheus-kube-prometheus-prometheus
-   ```
+      ```console
+      $ kubectl -nmonitoring port-forward svc/prometheus-operated 9090
+      ```
+      
+      Check `localhost:9090/config` and `localhost:9090/targets`.
+      
+      Or with Minikube at a random port:
+      
+      ```console
+      $ minikube -nmonitoring service prometheus-kube-prometheus-prometheus
+      ```
 
 
 13. Install Prometheus Adapter into the `monitoring` namespace with helm
@@ -251,36 +251,36 @@ Only install a standalone Prometheus instance with manual configuration.
 
 14. Add a rule to the ConfigMap of Prometheus Adapter:
 
-   ```console
-   $ kubectl -nmonitoring get cm prometheus-adapter -o yaml > k8s/prometheus-adapter.cm.yaml
-   ```
+      ```console
+      $ kubectl -nmonitoring get cm prometheus-adapter -o yaml > k8s/prometheus-adapter.cm.yaml
+      ```
+      
+      Add a new query under `rules` to fetch the `http_requests_per_second` metric from Prometheus:
+      
+      ```yaml
+      - seriesQuery: 'http_requests_total'
+        resources:
+          overrides:
+            namespace: {resource: "namespace"}
+            pod: {resource: "pod"}
+        name:
+          matches: "^(.*)_total"
+          as: "${1}_per_second"
+        metricsQuery: sum(rate(http_requests_total[2m])) by (namespace, pod)
+      ```
+      
+      The `metricsQuery` can be validated on Prometheus UI, if it shows the correct result, apply the config:
    
-   Add a new query under `rules` to fetch the `http_requests_per_second` metric from Prometheus:
+      ```console
+      $ kubectl -nmonitoring apply -f k8s/prometheus-adapter.cm.yaml
+      ```
+      
+      You could also edit the ConfigMap directly with
+      ```console
+      $ kubectl -nmonitoring edit cm prometheus-adapter
+      ```
    
-   ```yaml
-   - seriesQuery: 'http_requests_total'
-     resources:
-       overrides:
-         namespace: {resource: "namespace"}
-         pod: {resource: "pod"}
-     name:
-       matches: "^(.*)_total"
-       as: "${1}_per_second"
-     metricsQuery: sum(rate(http_requests_total[2m])) by (namespace, pod)
-   ```
-   
-   The `metricsQuery` can be validated on Prometheus UI, if it shows the correct result, apply the config:
-
-   ```console
-   $ kubectl -nmonitoring apply -f k8s/prometheus-adapter.cm.yaml
-   ```
-   
-   You could also edit the ConfigMap directly with
-   ```console
-   $ kubectl -nmonitoring edit cm prometheus-adapter
-   ```
-
-   More details about the config can be found in the [official doc](https://github.com/kubernetes-sigs/prometheus-adapter/blob/master/docs/config.md).
+      More details about the config can be found in the [official doc](https://github.com/kubernetes-sigs/prometheus-adapter/blob/master/docs/config.md).
 
 
 15. Restart the `prometheus-adapter` pod with the new config.
@@ -288,49 +288,49 @@ Only install a standalone Prometheus instance with manual configuration.
 
 16. Verify the metric can be retrieved by Custom Metrics API:
 
-   ```console
-   $ kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1
-   ```
-   
-   In the `resources` array you should find the metric `pods/http_requests_per_second`. 
-   If `resources` is empty, check any errors in the logs in prometheus-adapter, most likely the adapter can't connect to Prometheus due to config error.
-   The connection can be tested with
-   ```console
-   $ kubectl run -it --rm --image=curlimages/curl --restart=Never test -- curl -v <prometheus-url>:<prometheus-port>/api/v1/status/config
-   ```
+      ```console
+      $ kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1
+      ```
+      
+      In the `resources` array you should find the metric `pods/http_requests_per_second`. 
+      If `resources` is empty, check any errors in the logs in prometheus-adapter, most likely the adapter can't connect to Prometheus due to config error.
+      The connection can be tested with
+      ```console
+      $ kubectl run -it --rm --image=curlimages/curl --restart=Never test -- curl -v <prometheus-url>:<prometheus-port>/api/v1/status/config
+      ```
 
 ### Auto-scaling
 
 17. Create a HorizontalPodAutoscaler that scales based on the custom metric like in [hpa.yaml](https://github.com/YuKitAs/prometheus-custom-metrics-in-k8s/blob/main/k8s/hpa.yaml):
 
-   ```yaml
-   metrics:
-     - type: Pods
-       pods:
-         metric:
-           name: http_requests_per_second
-         target:
-           type: AverageValue
-           averageValue: 20
-   ```
+      ```yaml
+      metrics:
+        - type: Pods
+          pods:
+            metric:
+              name: http_requests_per_second
+            target:
+              type: AverageValue
+              averageValue: 20
+      ```
 
 18. Deploy the HPA to the `default` namespace as well:
 
-   ```console
-   $ kubectl apply -f k8s/hpa.yaml
-   ```
+      ```console
+      $ kubectl apply -f k8s/hpa.yaml
+      ```
 
 19. Run a load test to simulate more than 20 requests per second for 2 minutes. The HPA event log should show the following:
 
-   ```
-   $ kubectl describe hpa prometheus-custom-metrics-in-k8s
-   
-   Events:
-   Normal  SuccessfulRescale  7m  horizontal-pod-autoscaler    New size: 2; reason: pods metric http_requests_per_second above target
-   Normal  SuccessfulRescale  1m  horizontal-pod-autoscaler    New size: 1; reason: All metrics below target
-   ```
-   
-   You can also monitor the pods with
-   ```console
-   $ kubectl get pod -w
-   ```
+      ```
+      $ kubectl describe hpa prometheus-custom-metrics-in-k8s
+      
+      Events:
+      Normal  SuccessfulRescale  7m  horizontal-pod-autoscaler    New size: 2; reason: pods metric http_requests_per_second above target
+      Normal  SuccessfulRescale  1m  horizontal-pod-autoscaler    New size: 1; reason: All metrics below target
+      ```
+      
+      You can also monitor the pods with
+      ```console
+      $ kubectl get pod -w
+      ```
