@@ -18,3 +18,10 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65534 # nodody
+            capabilities:
+              drop:
+                - ALL
