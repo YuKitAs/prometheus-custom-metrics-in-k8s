@@ -1,2 +1,2 @@
-flask
+flask>=2.2.5,<3
 prometheus_client
